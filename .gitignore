@@ -1,7 +1,7 @@
 # Zinclusive
 
-testcommon/
-testcommon1/
+credentials.*
+/cache/
 
 # Byte-code files
 *.pyc
