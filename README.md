@@ -22,6 +22,6 @@ ollama:
 
 # Usage
 
-```
-python main..py
+```dos
+python main.py
 ```
