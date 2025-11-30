@@ -103,8 +103,7 @@ class TEMPLATE_ModelStack(ModelStack):
 
 
 
-
-if __name__ == "__main__":
+def test1():
     config = {
         'class': 'ollama',  
         'host':'http://localhost:11434',
@@ -112,3 +111,19 @@ if __name__ == "__main__":
     }
     modelstack = ModelStack.from_config(config)
     print(modelstack.query("What city was Benjamin Franklin born in?"))
+
+
+def test2():
+    config = {
+        'class': 'bedrock',  
+        'model': 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+        "temperature": 0.7,
+        "region": "us-west-1"
+    }
+    modelstack = ModelStack.from_config(config)
+    print(modelstack.query("What city was Benjamin Franklin born in?"))
+
+
+if __name__ == "__main__":
+    test1()
+    test2()
