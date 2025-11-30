@@ -15,3 +15,5 @@ Write a Python function that takes a list of numbers and returns the list sorted
 r = requests.post(f'{OLLAMA_HOST}/api/generate', json={'model': model, 'prompt': prompt, 'stream': False})
 answer = json.loads(r.text)['response']
 print(answer)
+
+
