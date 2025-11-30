@@ -1,19 +1,16 @@
-import requests
-import json
 import yaml
+
+from modelstack import ModelStack
 
 with open("credentials.yaml", "r") as f:
     credentials = yaml.safe_load(f)
 
-OLLAMA_HOST = credentials['ollama']['host']
-model = 'codellama:7b-instruct'
-prompt = """
-You are a helpful programming assistant.
-Write a Python function that takes a list of numbers and returns the list sorted in ascending order.
-"""
+stack = credentials['modelstack']['bedrock-haiku']
+modelstack = ModelStack.from_config(stack)
 
-r = requests.post(f'{OLLAMA_HOST}/api/generate', json={'model': model, 'prompt': prompt, 'stream': False})
-answer = json.loads(r.text)['response']
+prompt = "What city was Benjamin Franklin born in?"
+
+answer = modelstack.query(prompt)
 print(answer)
 
 
