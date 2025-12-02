@@ -2,6 +2,7 @@
 
 credentials.*
 /cache/
+/data/cache/
 
 # Byte-code files
 *.pyc
