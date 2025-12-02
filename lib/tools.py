@@ -47,8 +47,13 @@ def writeBytes(file, data):
         f.write(data)
 
 def readText(file, encoding="utf-8"):
-    with open(file, "r", encoding=encoding) as f:
-        return f.read()
+    for en in ["utf-8", "utf-16", "utf-32", "latin1", "ascii", "iso-8859-1"]:
+        try:
+            with open(file, "r", encoding=en) as f:
+                return f.read()
+        except UnicodeDecodeError:
+            pass
+    raise Exception(f"Could not read file {file} with any encoding")
 
 def writeText(file, data, encoding="utf-8"):
     with open(file, "w", encoding=encoding) as f:

@@ -6,19 +6,76 @@
 import os
 from lib.tools import *
 from lib.modelstack import ModelStack
-import pdfminer
+from pdfminer.six import extract_text
 import docx2txt 
 import chromadb
 from chromadb.config import Settings
+import olefile
+
+
+def read_doc_structure(doc_file_path):
+    """Extracts text content from an old .doc file using antiword."""
+    import subprocess
+    import tempfile
+    
+    try:
+        # Try using antiword if available
+        result = subprocess.run(
+            ['antiword', doc_file_path],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if result.returncode == 0:
+            text = result.stdout
+            if text:
+                return text
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    
+    # Fallback: try to extract what text we can from OLE structure
+    text = ""
+    try:
+        ole = olefile.OleFileIO(doc_file_path)
+        
+        # Try to read common text streams
+        if ole.exists('WordDocument'):
+            # Read the WordDocument stream (contains the actual text mixed with formatting)
+            content = ole.openstream('WordDocument').read()
+            
+            # Extract printable ASCII/UTF-8 characters (basic text extraction)
+            # This is a crude method but works for simple text extraction
+            decoded_text = []
+            for byte in content:
+                # Keep printable characters and common whitespace
+                if 32 <= byte <= 126 or byte in (9, 10, 13):  # ASCII printable + tab, newline, carriage return
+                    decoded_text.append(chr(byte))
+                elif byte == 0:
+                    decoded_text.append(' ')  # Replace null bytes with spaces
+            
+            text = ''.join(decoded_text)
+            # Clean up: remove excessive whitespace
+            text = ' '.join(text.split())
+            
+        ole.close()
+    except Exception as e:
+        print(f"Warning: Could not extract text from {doc_file_path}: {e}")
+        text = ""
+    
+    return text
+
+# Example Usage (replace 'your_old_file.doc' with the actual path)
+# read_doc_structure('your_old_file.doc')
+
 
 
 def read_corpus_document(filepath):
     if filepath.endswith(".pdf"):
-        return pdfminer.six.extract_text(filepath)
+        return extract_text(filepath)
     elif filepath.endswith(".docx"):
         return docx2txt.process(filepath)
     elif filepath.endswith(".doc"):
-        return docx2txt.process(filepath)
+        return read_doc_structure(filepath)
     else:
         return readText(filepath)
 
