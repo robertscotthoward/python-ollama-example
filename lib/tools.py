@@ -279,7 +279,7 @@ def ensurePath(path):
 
 def clean_filename(s):
     "Get rid of invalid characters"
-    invalid_chars = '<>:"?*/\\|'
+    invalid_chars = '<>:"?*|'
     for char in invalid_chars:
         s = s.replace(char, "_")
     l = "|"
