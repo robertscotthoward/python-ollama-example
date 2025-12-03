@@ -330,6 +330,8 @@ def put_file(key, data):
 
 
 def get_cache(key):
+    if not '.' in key:
+        key += '.json'
     return get_file(f"data/cache/{key}")
 
 

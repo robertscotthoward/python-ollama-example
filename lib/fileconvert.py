@@ -3,37 +3,41 @@ import os
 from docx import Document
 from lib.tools import readText
 
+
+def convert_all_doc_to_docx(folder_path):
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith(".doc"):
+                convert_doc_to_docx(os.path.join(root, file))
+
+
 def convert_doc_to_docx(doc_path):
-    """
-    Converts a .doc file directly to plain text (.txt) using Pandoc.
-    Requires Pandoc to be installed and in the system's PATH.
-    """
     if not os.path.exists(doc_path):
         print(f"Error: Source file not found at '{doc_path}'")
         return None
         
     output_dir = os.path.dirname(doc_path)
     base_name = os.path.splitext(os.path.basename(doc_path))[0]
-    temp_txt_path = os.path.join(output_dir, f"{base_name}.docx")
+    docx_path = os.path.join(output_dir, f"{base_name}.docx")
     
-    if not os.path.exists(temp_txt_path):
+    # if os.path.exists(docx_path):
+    #     # Set the last updated time to the doc file
+    #     os.utime(docx_path, (os.path.getatime(doc_path), os.path.getmtime(doc_path)))
+
+    if not os.path.exists(docx_path):
         try:
-            print(f"Converting '{doc_path}' to text using Pandoc...")
+            print(f"Converting '{doc_path}' to text using docx...")
             subprocess.run([
                 r"C:\Program Files\Microsoft Office\root\Office16\Wordconv.exe",
                 "-oice",
                 "-nme",
                 doc_path,
-                temp_txt_path
+                docx_path
             ], check=True, cwd=output_dir, capture_output=True)
 
-            # Read the content from the newly created text file
-            with open(temp_txt_path, 'r', encoding='utf-8') as f:
-                full_text = f.read()
-            
-            print("✅ Successfully extracted text using Pandoc.")
-            return full_text
-            
+            # Set the last updated time to the docx file
+            os.utime(docx_path, (os.path.getatime(doc_path), os.path.getmtime(doc_path)))
+           
         except FileNotFoundError:
             print("❌ CONVERSION FAILED: 'pandoc' command not found. Ensure Pandoc is installed.")
             return None
@@ -42,9 +46,11 @@ def convert_doc_to_docx(doc_path):
             return None
 
 
-    document = Document(temp_txt_path)
+def docx_to_text(docx_path):
+    document = Document(docx_path)
     text = '\n\n'.join(p.text for p in document.paragraphs)
     return text
+
 
 if __name__ == "__main__":
     doc_file = r"C:\Rob\RAG\Resumes, Work History, Career\2006\2003-04-23.doc"

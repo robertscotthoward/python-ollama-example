@@ -4,78 +4,23 @@
 # from unstructured.partition.auto import partition
 # import textract
 import os
+from lib.fileconvert import convert_all_doc_to_docx, docx_to_text
 from lib.tools import *
 from lib.modelstack import ModelStack
-from pdfminer.six import extract_text
 import docx2txt 
 import chromadb
 from chromadb.config import Settings
-import olefile
+import pypdf
 
 
-def read_doc_structure(doc_file_path):
-    """Extracts text content from an old .doc file using antiword."""
-    import subprocess
-    import tempfile
-    
-    try:
-        # Try using antiword if available
-        result = subprocess.run(
-            ['antiword', doc_file_path],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        if result.returncode == 0:
-            text = result.stdout
-            if text:
-                return text
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-    
-    # Fallback: try to extract what text we can from OLE structure
-    text = ""
-    try:
-        ole = olefile.OleFileIO(doc_file_path)
-        
-        # Try to read common text streams
-        if ole.exists('WordDocument'):
-            # Read the WordDocument stream (contains the actual text mixed with formatting)
-            content = ole.openstream('WordDocument').read()
-            
-            # Extract printable ASCII/UTF-8 characters (basic text extraction)
-            # This is a crude method but works for simple text extraction
-            decoded_text = []
-            for byte in content:
-                # Keep printable characters and common whitespace
-                if 32 <= byte <= 126 or byte in (9, 10, 13):  # ASCII printable + tab, newline, carriage return
-                    decoded_text.append(chr(byte))
-                elif byte == 0:
-                    decoded_text.append(' ')  # Replace null bytes with spaces
-            
-            text = ''.join(decoded_text)
-            # Clean up: remove excessive whitespace
-            text = ' '.join(text.split())
-            
-        ole.close()
-    except Exception as e:
-        print(f"Warning: Could not extract text from {doc_file_path}: {e}")
-        text = ""
-    
-    return text
-
-# Example Usage (replace 'your_old_file.doc' with the actual path)
-# read_doc_structure('your_old_file.doc')
-
+file_extensions = [".docx", ".pdf", ".txt", ".md", ".rst"]
 
 
 def read_corpus_document(filepath):
     if filepath.endswith(".pdf"):
-        return extract_text(filepath)
+        return pypdf.PdfReader(filepath).pages[0].extract_text()
     elif filepath.endswith(".docx"):
-        return docx2txt.process(filepath)
-    elif filepath.endswith(".doc"):
-        return read_doc_structure(filepath)
+        return docx_to_text(filepath)
     else:
         return readText(filepath)
 
@@ -83,10 +28,10 @@ def read_corpus_document(filepath):
 class ChromaRAG:
     """RAG system for querying a corpus using ChromaDB vector database"""
     
-    def __init__(self, modelstack, collection_name="MyNewCollection", file_extensions="doc,docx,pdf,txt,md,rst"):
+    def __init__(self, modelstack, collection_name="MyNewCollection", file_extensions=file_extensions):
         self.modelstack = modelstack
         self.collection_name = collection_name
-        self.file_extensions = file_extensions.split(",")
+        self.file_extensions = file_extensions
         self.client = chromadb.Client(Settings(
             anonymized_telemetry=False,
             is_persistent=True,
@@ -105,7 +50,9 @@ class ChromaRAG:
         """Load corpus from a folder into the vector database"""
         if not os.path.exists(corpus_folder):
             raise ValueError(f"Corpus folder not found: {corpus_folder}")
-        
+
+        convert_all_doc_to_docx(corpus_folder)
+
         before = self.state['collections'][self.collection_name].get("last_updated", 0)
         max_updated = 0
         for root, dirs, files in os.walk(corpus_folder):
@@ -119,7 +66,12 @@ class ChromaRAG:
                         text = read_corpus_document(filepath)
                         self.collection.add(
                             documents=[text],
-                            metadatas=[{"filename": file, "last_updated": last_updated}],
+                            metadatas=[
+                                {
+                                    "filename": file, 
+                                    "last_updated": last_updated,
+                                    "file_path": filepath
+                                }],
                             ids=[file]
                         )
         # Update the state with the latest timestamp
