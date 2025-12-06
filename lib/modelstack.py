@@ -1,7 +1,9 @@
+import time
 import boto3
 import requests
 import json
 import yaml
+from lib.tools import *
 
 
 
@@ -29,11 +31,22 @@ class OllamaModelStack(ModelStack):
     def __init__(self, config):
         super().__init__(config)
         
-    def query(self, prompt):
+    def query(self, prompt, max_tokens=1024):
         OLLAMA_HOST = self.config['host']
         model = self.config['model']
+        max_tokens = from_metric(self.config.get('max_tokens', max_tokens))
         url = f'{OLLAMA_HOST}/api/generate'
-        r = requests.post(url, json={'model': model, 'prompt': prompt, 'stream': False})
+        payload = {
+            'model': model, 
+            'prompt': prompt, 
+            'stream': False, 
+            'max_tokens': max_tokens
+        }
+        if 'temperature' in self.config:
+            payload['temperature'] = self.config['temperature']
+        if 'top_p' in self.config:
+            payload['top_p'] = self.config['top_p']
+        r = requests.post(url, json=payload)
         if r.status_code != 200:
             raise Exception(f"Request failed with status code {r.status_code}: {r.text}")
         answer = json.loads(r.text)['response']
@@ -47,10 +60,10 @@ class BedrockModelStack(ModelStack):
     def __init__(self, config):
         super().__init__(config)
         
-    def query(self, prompt):
+    def query(self, prompt, max_tokens=1024):
         model = self.config['model']
         region = self.config.get('region', 'us-west-1')
-        max_tokens = self.config.get('max_tokens', 1024)
+        max_tokens = from_metric(self.config.get('max_tokens', max_tokens))
         temperature = self.config.get('temperature', 0.7)
         top_p = self.config.get('top_p', 1)
 
@@ -71,13 +84,23 @@ class BedrockModelStack(ModelStack):
         body = json.dumps(params)
     
         client = boto3.client('bedrock-runtime', region_name=region)
-        response = client.invoke_model(
-            modelId=model,
-            body=body,
-            contentType='application/json',
-            accept='application/json'
-        )
-    
+        for i in range(3):
+            try:
+                response = client.invoke_model(
+                    modelId=model,
+                    body=body,
+                    contentType='application/json',
+                    accept='application/json'
+                )
+                break
+            except Exception as e:
+                print(f"Error invoking model: {e}")
+                if isinstance(e, TimeoutError) or "timed out" in str(e).lower():
+                    print("Request timed out. Consider increasing timeout or retrying.")
+            if i > 0:
+                time.sleep(1)
+            
+            
         # Parse the response body
         response_body = json.loads(response['body'].read())
     

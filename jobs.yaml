@@ -1,0 +1,167 @@
+condensed:
+  experience: |
+    Read the followin JSON object. It represents the person's work history for '{KEY}'.
+    Rewrite this JSON as a professional resume entry for the person's work history.
+    The output should be a valid JSON (include no markdown formatting) with the following structure:
+    - company: The name of the company
+      title: The title of the person at the company
+      dates: The dates of the person's employment
+      description: A description of the person's work at the company
+
+    JSON:
+    {JSON}
+
+  education: |
+    Read the followin JSON object. It represents the person's education for '{KEY}'.
+    Rewrite this JSON as a professional resume entry for the person's education.
+    The output should be a valid JSON object (include no markdown formatting) with the following structure:
+    - school: The name of the school
+      degree: The degree of the person's education
+      dates: The dates of the person's education
+      description: A description of the person's education
+
+    JSON:
+    {JSON}
+
+  skills: |
+    Read the followin JSON object. It represents the person's skills for '{KEY}'.
+    Rewrite this JSON as a professional resume entry for the person's skills.
+    The output should be a valid JSON (include no markdown formatting) with the following structure:
+    - skill: The name of the skill
+      description: A description of the skill
+      level: The level of the skill
+      where_utilized: The where the skill was utilized
+      how_utilized: The how the skill was utilized
+
+    JSON:
+    {JSON}
+
+  certifications: |
+    Read the followin JSON object. It represents the person's certifications for '{KEY}'.
+    Rewrite this JSON as a professional resume entry for the person's certifications.
+    The output should be a valid JSON (include no markdown formatting) with the following structure:
+    - certification: The name of the certification
+      issuer: The issuer of the certification
+      dates: The dates of the certification
+      description: A description of the certification
+    JSON: 
+    {JSON}
+
+  projects: |
+    Read the followin JSON object. It represents the person's projects for '{KEY}'.
+    Rewrite this JSON as a professional resume entry for the person's projects.
+    The output should be a valid JSON (include no markdown formatting) with the following structure:
+    - project: The name of the project
+      description: A description of the project
+      dates: The dates of the project
+      skills: A list of the skills used in the project
+      technologies: A list of the technologies used in the project
+      description: A description of the project
+    JSON:
+    {JSON}
+
+jobs:
+  resume:
+    # rag: resumes
+    system_prompt: |
+      Assume the GIVEN is a resume for Robert Howard.
+      You are a helpful assistant that can answer questions about these resumes and help convert the resume into a more readable format.
+
+      GIVEN: 
+      {{GIVEN}}
+
+      PROMPT:
+      {{PROMPT}}
+
+    files:
+      folder: C:\Rob\RAG\Resumes, Work History, Career
+      extensions: [".docx", ".pdf", ".txt", ".md", ".rst"]
+      target: C:\Rob\RAG\Resumes, Work History, Career\summarized.yaml
+
+    prompts:
+    - prompt: |-
+        Organize the GIVEN into a more readable format.
+        The output should be a valid JSON (include no markdown formatting) with the following structure:
+            name: The name of the person
+            email: The email of the person
+            phone: The phone number of the person
+            address: The address of the person
+            summary: A summary of the person's work history
+            experience: 
+              - company: The name of the company
+                title: The title of the person at the company
+                dates: The dates of the person's employment
+                description: A description of the person's work at the company
+            education: 
+              - school: The name of the school
+                degree: The degree of the person's education
+                dates: The dates of the person's education
+                description: A description of the person's education  
+            skills: 
+              - skill: The name of the skill
+                description: A description of the skill
+                level: The level of the skill
+                where_utilized: The where the skill was utilized
+                how_utilized: The how the skill was utilized
+                why_utilized: The why the skill was utilized
+                how_often_utilized: The how often the skill was utilized
+                how_long_utilized: The how long the skill was utilized
+                how_much_utilized: The how much the skill was utilized
+                how_much_utilized: The how much the skill was utilized
+            certifications: 
+              - certification: The name of the certification
+                issuer: The issuer of the certification
+                dates: The dates of the certification
+                description: A description of the certification
+            projects: 
+              - project: The name of the project
+                description: A description of the project
+                dates: The dates of the project
+                skills: A list of the skills used in the project
+                technologies: A list of the technologies used in the project
+                description: A description of the project
+
+
+  python-zinclusive:
+    # rag: python
+    system_prompt: |
+      GIVEN: 
+      {{GIVEN}}
+
+
+      PROMPT:
+      Assume the GIVEN is a python codebase for Zinclusive.
+      You are a helpful assistant that can answer questions about this codebase and help convert the codebase into a more readable format.
+
+      {{PROMPT}}
+
+
+    files:
+      folder: C:\Rob\GitHub\zinclusive\tech\
+      extensions: [".py"]
+      exclude_patterns:
+        - "/.venv"
+        - "/.git"
+        - "/.vscode"
+        - "/cache"
+      target: C:\Rob\RAG\Zinclusive\Python\skills.json
+
+    prompts: 
+    - prompt: |
+        Read the GIVEN python file. 
+        Analyze this file for technical skills used in the file.
+        The goal is to identify the technical skills used in the file and return a list of objects, one object for each technical skill used in the file.
+        Each skill should just be the name of the skill, e.g. "AWS", "Azure", "SQL", "Pandas", "NumPy", "Matplotlib", "Seaborn", "Scikit-learn", "TensorFlow", "Keras", "PyTorch", "OpenCV", "NLTK", "spaCy", "nltk", "scipy".
+        Ignore any skill that is not a technical skill, e.g. "Business", "Management", "Leadership", "Communication", "Teamwork", "Collaboration", "Problem-solving", "Decision-making", "Creativity".
+        Ignore any skill that a junior developer or entry level developer would be expected to know, such as basic python syntax, reading files, writing files, etc.
+
+        JSON OUTPUT FORMAT EXAMPLE:
+          {
+            "skills": ["AWS", "Azure", "SQL", "Pandas", "NumPy", "Matplotlib", "Seaborn", "Scikit-learn", "TensorFlow", "Keras", "PyTorch", "OpenCV", "NLTK", "spaCy", "nltk", "scipy"]
+          }
+
+        Do not write python code in your response. Only write the JSON object that represents the technical skills used in the file.
+        Ensure that the output is a valid JSON object and in the format specified in the example above.
+        Only response with the JSON object. Include no other text or markdown formatting.
+
+        When you have completed your answer, check that the output is a valid JSON object and in the format specified in the example above.

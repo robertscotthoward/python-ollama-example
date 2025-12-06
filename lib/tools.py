@@ -5,6 +5,7 @@ import re
 import os
 import csv
 import yaml
+from yaml.representer import SafeRepresenter
 from ruamel.yaml import YAML
 
 
@@ -16,11 +17,42 @@ from ruamel.yaml import YAML
 # ================================================================================
 # H E L P E R   F U N C T I O N S
 
+
+def from_metric(s):
+    s = str(s).strip()
+    if s.endswith('K'):
+        return int(s[:-1]) * 1024
+    elif s.endswith('M'):
+        return int(s[:-1]) * 1024 * 1024
+    elif s.endswith('G'):
+        return int(s[:-1]) * 1024 * 1024 * 1024
+    return int(s)
+
+
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
             return obj.isoformat()
         return super(DateTimeEncoder, self).default(obj)
+
+
+# Smart representer: use | only when it makes sense
+def smart_str_representer(dumper, data):
+    # If the string has newlines OR is longer than ~70 chars → use literal block |
+    if '\n' in data or len(data) > 70:
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+    # For very short strings that are obviously "tags", keep them plain
+    if len(data) < 30 and data.isascii() and not data.startswith((' ', '\t')):
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+    # Otherwise use plain style but allow folding if it's medium length
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='')
+
+class PrettyDumper(yaml.SafeDumper):
+    pass
+
+PrettyDumper.add_representer(str, smart_str_representer)
+
+
 
 def readJson(file):
     with open(file) as f:
@@ -36,7 +68,16 @@ def readYaml(file):
 
 def writeYaml(file, data):
     with open(file, "w") as f:
-        yaml.dump(data, f, indent=2)
+        yaml.dump(
+            data,
+            f,
+            indent=2,
+            default_flow_style=False,
+            allow_unicode=True,
+            width=4096,
+            Dumper=PrettyDumper,
+            sort_keys=False
+        )
 
 def readBytes(file):
     with open(file, "rb") as f:
@@ -54,6 +95,15 @@ def readText(file, encoding="utf-8"):
         except UnicodeDecodeError:
             pass
     raise Exception(f"Could not read file {file} with any encoding")
+
+def to_utf8(s):
+    for en in ["utf-8", "utf-16", "utf-32", "latin1", "ascii", "iso-8859-1"]:
+        try:
+            return s.encode(en).decode('utf-8')
+        except UnicodeDecodeError:
+            pass
+    return s
+
 
 def writeText(file, data, encoding="utf-8"):
     with open(file, "w", encoding=encoding) as f:
