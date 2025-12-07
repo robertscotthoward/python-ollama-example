@@ -24,6 +24,19 @@ class ModelStack:
     def query(self, prompt):
         raise NotImplementedError("Subclasses must implement this method.")
 
+    def query_yes_no(self, prompt):
+        # Note: When debugging, this method may timeout in the debugger's expression evaluator
+        # due to network calls to LLM APIs. Set PYDEVD_WARN_EVALUATION_TIMEOUT=10 or higher
+        # in your environment to increase the debugger's evaluation timeout.
+        prompt = "Only respond with 'yes' or 'no' or 'maybe' as the first word on its own line. If 'maybe', follow up with a short explanation.\n" + prompt
+        answer = self.query(prompt, max_tokens=1024)
+        word = answer.lower().strip().splitlines()[0].split(' .')[0]
+        if word in ['yes', 'no']:
+            return word
+        return answer
+    
+
+
 
 
 

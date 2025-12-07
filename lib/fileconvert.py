@@ -4,18 +4,12 @@ from docx import Document
 from lib.tools import readText
 
 
-def convert_all_doc_to_docx(folder_path):
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith(".doc"):
-                convert_doc_to_docx(os.path.join(root, file))
-
-
 def convert_doc_to_docx(doc_path):
     if not os.path.exists(doc_path):
         print(f"Error: Source file not found at '{doc_path}'")
         return None
         
+    doc_path = doc_path.replace('\\', '/')
     output_dir = os.path.dirname(doc_path)
     base_name = os.path.splitext(os.path.basename(doc_path))[0]
     docx_path = os.path.join(output_dir, f"{base_name}.docx")
@@ -44,6 +38,13 @@ def convert_doc_to_docx(doc_path):
         except subprocess.CalledProcessError as e:
             print(f"❌ CONVERSION FAILED: Pandoc error. Output: {e.stderr.decode()}")
             return None
+
+
+def convert_all_doc_to_docx(folder_path):
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith(".doc"):
+                convert_doc_to_docx(os.path.join(root, file))
 
 
 def docx_to_text(docx_path):
