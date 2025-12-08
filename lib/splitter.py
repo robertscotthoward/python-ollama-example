@@ -8,7 +8,9 @@ class Splitter:
 
 
 class RecursiveCharacterText_Splitter(Splitter):
+
     def __init__(self, chunk_size=1000, chunk_overlap=200):
+        """Grok: What is a good chunk size and overlap for a RAG system?"""
         super().__init__()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -24,7 +26,7 @@ class RecursiveCharacterText_Splitter(Splitter):
 
 
 if __name__ == "__main__":
-    splitter = RecursiveCharacterText_Splitter(chunk_size=20, chunk_overlap=5)
+    splitter = RecursiveCharacterText_Splitter(chunk_size=1500, chunk_overlap=250)
     chunks = splitter.get_chunks("Hello, world! This is a test of the splitter. It should split the text into chunks of 20 characters with 5 characters of overlap.")
     print(chunks)
 

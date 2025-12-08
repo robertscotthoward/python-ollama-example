@@ -146,7 +146,7 @@ def summarize_resumes():
     jobs = jobfile.get('jobs', {})
     job = jobs.get('resume', {})
 
-    rag = ChromaRAG(modelstack, collection_name=job.get('rag', ''))
+    rag = ChromaRAG(modelstack, collection_path=job.get('rag', ''))
     rag.run_job(job)
 
 
@@ -240,7 +240,7 @@ def condense_resumes():
     stack = credentials['modelstack']['ollama-yaml-generation']
     stack = credentials['modelstack']['ollama-summarization']
     modelstack = ModelStack.from_config(stack)
-    rag = ChromaRAG(modelstack, collection_name=None)
+    rag = ChromaRAG(modelstack, collection_path=None)
 
     out = {}
     for k0, v0 in agg.items():
@@ -278,7 +278,7 @@ def summarize_python_codebase():
     jobs = jobfile.get('jobs', {})
     job = jobs.get('python-zinclusive', {})
 
-    rag = ChromaRAG(modelstack, collection_name=job.get('rag', ''))
+    rag = ChromaRAG(modelstack, collection_path=job.get('rag', ''))
     rag.run_job(job)
 
 
@@ -286,7 +286,7 @@ def test2():
     credentials = readYaml(findPath("credentials.yaml"))
     stack = credentials['modelstack']['bedrock-haiku']
     modelstack = ModelStack.from_config(stack)
-    rag = ChromaRAG(modelstack, collection_name="resumes")
+    rag = ChromaRAG(modelstack, collection_path="resumes")
 
     # Load resumes (you'll need to create a 'resumes' folder with .txt or .md files)
     corpus_folder = r"C:\Rob\RAG\Resumes, Work History, Career"

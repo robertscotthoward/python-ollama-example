@@ -3,6 +3,7 @@
 credentials.*
 /cache/
 /data/cache/
+/data/chroma_db/
 
 # Byte-code files
 *.pyc

@@ -12,13 +12,16 @@ class ModelStack:
     def __init__(self, config):
         self.config = config
         
+    def num_tokens(self):
+        return from_metric(self.config.get('context-window', '1024'))
+
     @staticmethod
-    def from_config(config):
-        cls = config.get('class')
+    def from_config(model_config):
+        cls = model_config.get('class')
         if cls == 'ollama':
-            return OllamaModelStack(config)
+            return OllamaModelStack(model_config)
         if cls == 'bedrock':
-            return BedrockModelStack(config)
+            return BedrockModelStack(model_config)
         raise ValueError(f"Unsupported model stack class: {cls}")
     
     def query(self, prompt):

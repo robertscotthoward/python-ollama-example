@@ -4,7 +4,7 @@
 ```mermaid
 graph LR
 RAG --> VDB
-RAG --> Chunker
+RAG --> Splitter
 RAG --> Corpus
 RAG --> ModelStack
 ModelStack -.-> OllamaModelStack
