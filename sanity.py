@@ -151,7 +151,7 @@ def import_all():
             print(f"ERROR: {e}")
 
 
-def main1():
+def main_import_all():
     print("🔍 Scanning Python files for imports...\n")
     
     results = scan_python_files()
@@ -179,5 +179,17 @@ def main1():
     print(f"✨ Total files scanned: {len(results)}")
 
 
+def main_environment():
+    import torch
+    print(torch.version.cuda)
+    if torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+    print(f"Using device: {device}")
+
+
+
 if __name__ == "__main__":
-    import_all()
+    #import_all()
+    main_environment()
