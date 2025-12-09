@@ -6,7 +6,6 @@ from lib.corpus import *
 import chromadb
 from chromadb.config import Settings
 
-
 file_extensions = [".docx", ".pdf", ".txt", ".md", ".rst"]
 
 
@@ -77,6 +76,21 @@ class VectorDb:
         self.commit_batch()
         return max_updated
 
+    def get_reranker(self):
+        if hasattr(self, 'reranker') and self.reranker:
+            return self.reranker
+        import torch
+        from FlagEmbedding import FlagReranker
+        if torch.cuda.is_available():
+            self.device = "cuda"
+        else:
+            self.device = "cpu"
+        modelName = 'BAAI/bge-reranker-v2-m3'
+        if self.device == "cuda":
+            modelName = 'BAAI/bge-reranker-large'
+        self.reranker = FlagReranker(modelName, device=self.device, use_fp16=True)
+        return self.reranker
+
 
 
 
@@ -116,20 +130,38 @@ class ChromaVectorDb(VectorDb):
 
 
 
-    def retrive_documents(self, prompt, n_results=10):
+    def retrive_documents(self, query, n_results=80):
         """Query the vector database and generate an answer using the LLM"""
         
         numEntries = self.collection.count()
 
-        # Retrieve relevant documents
+        # Retrieve a generous amount of relevant documents (cheap and fast)
         results = self.collection.query(
-            query_texts=[prompt],
+            query_texts=[query],
             n_results=n_results
         )
         
         if not results['documents'] or not results['documents'][0]:
             return "No relevant documents found."
         
+        # Re-rank them with a cross-encoder
+        reranker = self.get_reranker()
+
+        def rerank_with_bge(query: str, documents, top_k: int = 12):
+            pairs = [[query, doc] for doc in documents]
+            scores = reranker.compute_score(pairs, batch_size=32)
+            # scores is a list of floats
+            ranked = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)
+            return [doc for doc, score in ranked[:top_k]]
+
+        # Usage
+        raw_results = self.collection.query(query_texts=[query], n_results=80)['documents'][0]
+        top_reranked = rerank_with_bge(query, raw_results, top_k=12)        
+
+        results['documents'][0] = top_reranked
+        results['metadatas'][0] = [metadata for metadata in results['metadatas'][0]]
+
+
         # Build context from retrieved documents
         context_parts = []
         for doc, metadata in zip(results['documents'][0], results['metadatas'][0]):
